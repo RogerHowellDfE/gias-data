@@ -1,0 +1,33 @@
+{
+  "name": "gias-data",
+  "version": "1.0.0",
+  "description": "Tool to download and validate GIAS educational data files",
+  "main": "dist/fetch-data.js",
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rimraf ./dist && rimraf ./coverage && rimraf ./node_modules/.cache && jest --clearCache",
+    "download": "ts-node src/fetch-data.ts",
+    "download:compiled": "node dist/src/fetch-data.js",
+    "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" \"test/**/*.ts\" --fix",
+    "test": "jest"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "date-fns": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.1.0",
+    "@typescript-eslint/eslint-plugin": "^8.38.0",
+    "@typescript-eslint/parser": "^8.38.0",
+    "eslint": "^9.31.0",
+    "jest": "^30.0.5",
+    "rimraf": "^6.0.1",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.2"
+  }
+}
