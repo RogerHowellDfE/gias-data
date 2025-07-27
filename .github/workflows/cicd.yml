@@ -1,4 +1,6 @@
 name: CI/CD
+permissions:
+  contents: read
 
 on:
   push:
@@ -36,4 +38,3 @@ jobs:
         run: npm run lint
       - name: Run tests
         run: npm test
-
