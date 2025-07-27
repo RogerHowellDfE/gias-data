@@ -4,23 +4,11 @@ permissions:
 
 on:
   push:
-    paths:
-      - '**/*.ts'
-      - '**/*.js'
-      - '.github/workflows/*.yml'
-      - 'package.json'
-      - 'tsconfig.json'
-      - 'jest.config.cjs'
-      - '!data/**'
+    paths-ignore:
+      - 'data/**'
   pull_request:
-    paths:
-      - '**/*.ts'
-      - '**/*.js'
-      - '.github/workflows/*.yml'
-      - 'package.json'
-      - 'tsconfig.json'
-      - 'jest.config.cjs'
-      - '!data/**'
+    paths-ignore:
+      - 'data/**'
 
 jobs:
   test:
