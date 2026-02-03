@@ -275,6 +275,11 @@ export async function fetchData(
   console.log('=== Skipped Files ===');
   skippedFiles.forEach(file => console.log(`Skipped: ${file}`));
 
+  // Fail if all downloads failed - this indicates an upstream issue
+  if (downloadedFiles.length === 0 && templates.length > 0) {
+    throw new Error('All file downloads failed - check if the data source is available');
+  }
+
   return { downloadedFiles, skippedFiles, fileSizeWarnings };
 }
 

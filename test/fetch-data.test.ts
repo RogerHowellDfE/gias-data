@@ -42,14 +42,9 @@ describe('fetchData function integration', () => {
     // Arrange - common setup
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
 
-    // Create the temporary directory if it does not exist
+    // Clean up and recreate the temporary directory to ensure clean state
+    await safeFileOps.removeDir(tempDir);
     await fs.mkdir(tempDir, { recursive: true });
-
-    // Ensure the temporary directory is clean
-    const files = await fs.readdir(tempDir);
-    for (const file of files) {
-      await safeFileOps.deleteFile(path.join(tempDir, file));
-    }
   });
 
   // Clean up after each test
@@ -82,13 +77,59 @@ describe('fetchData function integration', () => {
     expect(files).toContain('test1.csv');
   });
 
-  test('handles HTTP 404 errors gracefully', async () => {
+  test('FetchData_WhenSingleDownloadFails_ThrowsError', async () => {
     // Arrange - Setup to request a file that will return 404
+    // Note: When ALL downloads fail, fetchData now throws an error
+
+    // Act & Assert
+    await expect(fetchData({
+      urlTemplates: [
+        { urlTemplate: `http://localhost:${TEST_SERVER_PORT}/404.csv`, outputFile: '404.csv' },
+      ],
+      config: {
+        outputDir: tempDir,
+      },
+    })).rejects.toThrow('All file downloads failed');
+  });
+
+  test('FetchData_WhenAllDownloadsFail_ThrowsError', async () => {
+    // Arrange - all URLs return 404
+    server.removeAllListeners('request');
+    server.on('request', (_req, res) => {
+      res.writeHead(404);
+      res.end();
+    });
+
+    // Act & Assert
+    await expect(fetchData({
+      urlTemplates: [
+        { urlTemplate: `http://localhost:${TEST_SERVER_PORT}/file1.csv`, outputFile: 'file1.csv' },
+        { urlTemplate: `http://localhost:${TEST_SERVER_PORT}/file2.csv`, outputFile: 'file2.csv' },
+      ],
+      config: {
+        outputDir: tempDir,
+      },
+    })).rejects.toThrow('All file downloads failed - check if the data source is available');
+  });
+
+  test('FetchData_WhenSomeDownloadsSucceed_ReturnsResultWithoutError', async () => {
+    // Arrange - one URL succeeds, one fails
+    server.removeAllListeners('request');
+    server.on('request', (req, res) => {
+      if (req.url === '/success.csv') {
+        res.writeHead(200, { 'Content-Type': 'text/csv' });
+        res.end('header,value\n1,2');
+      } else {
+        res.writeHead(404);
+        res.end();
+      }
+    });
 
     // Act
     const result = await fetchData({
       urlTemplates: [
-        { urlTemplate: `http://localhost:${TEST_SERVER_PORT}/404.csv`, outputFile: '404.csv' },
+        { urlTemplate: `http://localhost:${TEST_SERVER_PORT}/success.csv`, outputFile: 'success.csv' },
+        { urlTemplate: `http://localhost:${TEST_SERVER_PORT}/fail.csv`, outputFile: 'fail.csv' },
       ],
       config: {
         outputDir: tempDir,
@@ -96,7 +137,8 @@ describe('fetchData function integration', () => {
     });
 
     // Assert
-    expect(result.skippedFiles).toContain('404.csv');
+    expect(result.downloadedFiles.length).toBe(1);
+    expect(result.skippedFiles).toContain('fail.csv');
   });
 
   test('logs warnings for file size changes', async () => {
